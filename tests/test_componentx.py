@@ -89,7 +89,10 @@ class CleanDatasetTests(PreflightCase):
     def test_evidence_statuses_are_explicit(self):
         manifest = self.preflight()
         self.assertEqual(manifest["license"]["status"], "publisher_claim")
-        self.assertEqual(manifest["license"]["verification"], "unverified")
+        self.assertEqual(manifest["license"]["verification"], "verified_official_catalog")
+        self.assertIn("researchdata.se", manifest["license"]["evidence"])
+        self.assertEqual(len(componentx.EXPECTED), 9)
+        self.assertIn("official version 3 catalog", componentx._CATALOG_EVIDENCE)
         for claim in manifest["source"].values():
             self.assertEqual(claim["status"], "publisher_claim")
         claims = manifest["files"][TRAIN_OPS]["publisher_claims"]

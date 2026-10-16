@@ -18,50 +18,71 @@ structurally sound, and are they fit for vehicle-isolated research later?
 It is not a loader for modelling. It derives no feature, trains nothing, predicts
 nothing, does not interpret anonymous columns, and does not read outcome values.
 
-## 2. Gate 0: source evidence (2026-10-15)
+## 2. Gate 0: source evidence (updated 2026-10-15)
 
-### 2.1 Access attempts from this environment
+### 2.1 Publisher catalog independently verified
 
-Every publisher host was unreachable:
+The [official Researchdata.se version 3 catalog](https://researchdata.se/en/catalogue/dataset/2024-34/3)
+was retrieved and inspected on 2026-10-15 outside Claude's restricted development
+environment. It directly confirms:
 
-| Request | Result |
-|---|---|
-| `curl https://researchdata.se/en/catalogue/dataset/2024-34/3` | `curl: (56) CONNECT tunnel failed, response 403` |
-| `curl https://doi.org/10.5878/bnh5-ka77` | same |
-| `curl https://api.researchdata.se/dataset/2024-34/3` | same |
-| `curl https://pmc.ncbi.nlm.nih.gov/articles/PMC11933314/`, `https://www.nature.com/articles/s41597-025-04802-6`, `https://creativecommons.org/licenses/by/4.0/legalcode` | same (HTTP code 000) |
-| Fetch tool on `researchdata.se`, `api.researchdata.se`, `pmc.ncbi.nlm.nih.gov`, `arxiv.org` | `getaddrinfo ENOTFOUND` |
+- Dataset title: *SCANIA Component X Dataset: A Real-World Multivariate Time Series
+  Dataset for Predictive Maintenance*.
+- Version **3**, DOI **10.5878/bnh5-ka77**, published **2025-04-09**.
+- Access **open**; license **Creative Commons Attribution 4.0 International
+  (CC BY 4.0)**. Credit the five named creators, cite the versioned DOI, link
+  to the license, and indicate changes in any reused material.
+- **11 files** totaling approximately **1.54 GiB**, comprising **nine CSV data
+  files and two documentation PDFs**.
+- The v2 release introduced test labels; v3 replaced the documentation
+  manuscript with the final journal article.
 
-The environment's network policy denies these hosts. To enable them, edit the cloud
-environment's Network access (session title bar → environment menu → Edit) and add
-`researchdata.se`, `api.researchdata.se` and `doi.org` to Allowed domains
-([steps](https://code.claude.com/docs/en/cloud-environments#network-access)).
+The **exact nine CSV filenames**, confirmed from the v3 catalog, are:
 
-### 2.2 What is known, and how well
 
-Only web-search index excerpts of the publisher's pages were reachable. They are
-**secondary**: the pages themselves were not read, so nothing below is
-`verified_local`. The same table is in code as `componentx.SOURCE`, `LICENSE` and
-`EXPECTED`, and is copied into every manifest.
+| Split | Operational | Specifications | Outcomes (do not inspect labels during Stage A) |
+|---|---|---|---|
+| Train | `train_operational_readouts.csv` | `train_specifications.csv` | `train_tte.csv` |
+| Validation | `validation_operational_readouts.csv` | `validation_specifications.csv` | `validation_labels.csv` |
+| Test | `test_operational_readouts.csv` | `test_specifications.csv` | `test_labels.csv` |
 
-| Item | Claim | Evidence |
-|---|---|---|
-| Title, version, DOI | SCANIA Component X Dataset, version 3, `10.5878/bnh5-ka77` | search excerpt of the publisher's DDI export for 2024-34/3 |
-| Previous version | version 2, `10.5878/jvb5-d390` (the DOI the descriptor cites) | search excerpt of the publisher's download page; issue #4 |
-| Size | 11 files, about 1.54 GiB | search excerpt of the catalogue page |
-| Licence | CC BY 4.0 | **unverified**: issue #4 only; the version 3 licence field could not be read |
-| `train_tte.csv` | 337.32 KiB; 23,550 rows; columns `length_of_study_time_step`, `in_study_repair` | catalogue excerpt; descriptor (via search) |
-| `train_specifications.csv` | 1.03 MiB; 23,550 rows; 8 categorical features | catalogue excerpt; descriptor (via search) |
-| `validation_labels.csv` | 37.83 KiB; 5,046 rows; `class_label` | catalogue excerpt; descriptor (via search) |
-| `test_labels.csv` | 37.78 KiB (38,682 bytes); 5,045 rows | catalogue excerpt |
-| `train_operational_readouts.csv` | 1,122,452 rows, 23,550 vehicles, 107 columns (about 1.14 GB) | descriptor (via search); file name and size from issue #4 |
-| `validation_` / `test_operational_readouts.csv` | 196,227 / 198,140 rows, 5,046 / 5,045 vehicles | issue #4 citing the descriptor; file names unverified |
-| `validation_` / `test_specifications.csv` | exist | **name inferred by analogy, unverified** |
-| Validation class counts | conflicting figures in two secondary sources | not resolved; not needed in Stage A |
+Documentation filenames: `2024_IDA_challenge_v2.pdf` and `Scania_Component_X.pdf`.
 
-**Not established:** exact file names of all 11 files, the two documentation files,
-compression, encoding, column headers, the boundary convention of the label
-classes, public download endpoints, and the licence of version 3.
+The `publisher_claim` status remains correct for source metadata: it describes
+**published facts**, not an independently inspected dataset archive. The
+`LICENSE.verification` field now records `verified_official_catalog`.
+**No CSV payload, file checksum, CSV header, encoding or delimiter has been
+independently examined.** The existing expected row/column/size numbers remain
+claims from the dataset descriptor, not local validation results.
+
+### 2.2 Prior access attempts and remaining blocker
+
+The previous Claude development environment could not fetch the publisher:
+`curl: (56) CONNECT tunnel failed, response 403` and DNS failures on the
+Researchdata.se/SND/DOI hosts. Those attempts remain historical evidence of an
+environment-specific network restriction, **not evidence that the publisher
+website is unavailable**.
+
+In the current working container, DNS access to
+`researchdata.se`, `api.researchdata.se`, `doris.snd.se` and `snd.se`
+also failed. A web research client could read the official catalog page but
+could not transfer a CSV file into the preflight runtime. No official
+`train_specifications.csv` bytes or SHA-256 were obtained.
+
+**Next evidence gate:** via an approved environment with direct publisher file
+access, obtain **one small non-label file**, preferably
+`train_specifications.csv`, confirm its exact publisher link and local SHA-256,
+and run the offline preflight. The expected manifest status for other missing
+files is `incomplete`; do not create dummy "Scania" files or open any test
+label values. Large operational downloads require a separate resource check.
+
+### 2.3 What remains scientifically unverified
+
+Real-file header schemas, encoding, per-file sizes/checksums, outcome label
+boundaries and temporal feature semantics have not been established by actual
+file inspection. Neither model training nor predictive claims are authorized.
+The published license does not resolve these technical validity gates.
+
 
 ## 3. Gate 1: what the preflight checks
 
@@ -159,7 +180,7 @@ hash it); run the preflight; only then, with authorisation, the operational file
 
 ## 6. How to run with legally obtained files
 
-1. Read the version 3 licence and terms on the [catalog page](https://researchdata.se/en/catalogue/dataset/2024-34/3) and record them.
+1. Cite the confirmed v3 CC BY 4.0 license and dataset DOI from the [official catalog](https://researchdata.se/en/catalogue/dataset/2024-34/3); record actual download URL and original file checksum.
 2. Put the files in a directory outside the repository, or in `data/` (git-ignored). Do not commit them.
 3. `pexislink dataset preflight --source component-x-v3 --input-dir DIR --out manifest.json`.
 4. Compare `files.*.sha256` with any checksum the publisher provides (none was found yet).

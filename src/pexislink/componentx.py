@@ -54,32 +54,49 @@ NOTICE = ("Data-quality preflight only. No model, prediction, risk score or labe
 # --------------------------------------------------------------- evidence
 
 _CATALOG = "https://researchdata.se/en/catalogue/dataset/2024-34/3"
-_SEARCH = ("web-search index excerpt of the publisher page (2026-10-15); the page itself could not "
-           "be fetched from this environment (HTTP 403 / DNS failure), so this is not a primary read")
-_DESCRIPTOR = "dataset descriptor, Kharazian et al., Scientific Data 12, 493 (2025), as cited in issue #4"
-_ISSUE = "owner's source research in issue #4 (2026-10-15), not re-verified here"
+_CATALOG_EVIDENCE = (
+    "Researchdata.se official version 3 catalog, accessed 2026-10-15: "
+    + _CATALOG
+)
+_DESCRIPTOR = (
+    "Kharazian et al., Scientific Data 12, 493 (2025), "
+    "https://doi.org/10.1038/s41597-025-04802-6 "
+    "(published research descriptor, not observed CSV bytes)"
+)
 
+# 'publisher_claim' means information from the source, NOT from files parsed by PexisLink.
+# Only successfully inspected local files can carry status 'verified_local'.
 SOURCE: dict[str, Any] = {
-    "name": {"value": "SCANIA Component X Dataset", "status": "publisher_claim", "evidence": _SEARCH},
-    "version": {"value": "3", "status": "publisher_claim", "evidence": _SEARCH},
-    "doi": {"value": "10.5878/bnh5-ka77", "status": "publisher_claim", "evidence": _SEARCH},
-    "catalog_url": {"value": _CATALOG, "status": "publisher_claim", "evidence": "plan 0002"},
+    "name": {"value": "SCANIA Component X Dataset", "status": "publisher_claim",
+             "evidence": _CATALOG_EVIDENCE},
+    "version": {"value": "3", "status": "publisher_claim", "evidence": _CATALOG_EVIDENCE},
+    "doi": {"value": "10.5878/bnh5-ka77", "status": "publisher_claim",
+            "evidence": _CATALOG_EVIDENCE},
+    "catalog_url": {"value": _CATALOG, "status": "publisher_claim",
+                    "evidence": _CATALOG_EVIDENCE},
     "descriptor_doi": {"value": "10.1038/s41597-025-04802-6", "status": "publisher_claim",
-                       "evidence": "plan 0002; issue #4"},
+                       "evidence": _CATALOG_EVIDENCE},
     "previous_version_doi": {"value": "10.5878/jvb5-d390", "status": "publisher_claim",
-                             "evidence": f"{_ISSUE}; also cited as version 2 on the publisher's download page "
-                                         "(web-search excerpt)"},
-    "total_size": {"value": "11 files, about 1.54 GiB", "status": "publisher_claim", "evidence": _SEARCH},
+                              "evidence": _CATALOG_EVIDENCE},
+    "total_size": {"value": "11 files, about 1.54 GiB", "status": "publisher_claim",
+                    "evidence": _CATALOG_EVIDENCE},
 }
 
 LICENSE: dict[str, Any] = {
     "value": "CC BY 4.0",
     "status": "publisher_claim",
-    "verification": "unverified",
-    "evidence": (f"{_ISSUE}. The licence field of version 3 could not be read from the primary source in "
-                 "this environment; read it at the catalog URL before any download or redistribution."),
-    "attribution": ("If the publisher licence is confirmed as CC BY 4.0: cite the dataset (DOI) and the "
-                    "descriptor, and indicate modifications. Raw files are never committed to this repository."),
+    "verification": "verified_official_catalog",
+    "evidence": (
+        "The official version 3 Researchdata.se entry identifies the license as "
+        "Creative Commons Attribution 4.0 International (CC BY 4.0): " + _CATALOG
+        + " (accessed 2026-10-15). This verifies the publisher's license metadata, "
+        "not the contents or checksums of any downloaded dataset files."
+    ),
+    "attribution": (
+        "Credit Lindgren, Steinert, Andersson Reyna, Kharazian and Magnusson; "
+        "cite the version 3 dataset DOI 10.5878/bnh5-ka77, link the CC BY 4.0 license "
+        "and indicate changes when reusing the data. No raw files are committed."
+    ),
 }
 
 
@@ -109,31 +126,31 @@ def _mib(display: float) -> tuple[int, int]:
 
 EXPECTED: dict[str, ExpectedFile] = {
     "train_operational_readouts.csv": ExpectedFile(
-        "train", "operational", f"{_DESCRIPTOR}; file name from {_ISSUE}",
+        "train", "operational", f"{_CATALOG_EVIDENCE}; counts: {_DESCRIPTOR}",
         rows=1_122_452, vehicles=23_550, columns=107),
     "validation_operational_readouts.csv": ExpectedFile(
-        "validation", "operational", f"{_DESCRIPTOR}; file name by analogy, unverified",
+        "validation", "operational", f"{_CATALOG_EVIDENCE}; counts: {_DESCRIPTOR}",
         rows=196_227, vehicles=5_046),
     "test_operational_readouts.csv": ExpectedFile(
-        "test", "operational", f"{_DESCRIPTOR}; file name from a secondary review, unverified",
+        "test", "operational", f"{_CATALOG_EVIDENCE}; counts: {_DESCRIPTOR}",
         rows=198_140, vehicles=5_045),
     "train_specifications.csv": ExpectedFile(
-        "train", "specifications", f"{_SEARCH}; {_DESCRIPTOR}",
+        "train", "specifications", f"{_CATALOG_EVIDENCE}; counts: {_DESCRIPTOR}",
         rows=23_550, bytes_min=_mib(1.03)[0], bytes_max=_mib(1.03)[1]),
     "validation_specifications.csv": ExpectedFile(
-        "validation", "specifications", "file name by analogy, unverified"),
+        "validation", "specifications", _CATALOG_EVIDENCE),
     "test_specifications.csv": ExpectedFile(
-        "test", "specifications", "file name by analogy, unverified"),
+        "test", "specifications", _CATALOG_EVIDENCE),
     "train_tte.csv": ExpectedFile(
-        "train", "outcome", f"{_SEARCH}; {_DESCRIPTOR}",
+        "train", "outcome", f"{_CATALOG_EVIDENCE}; labels: {_DESCRIPTOR}",
         rows=23_550, column_names=("length_of_study_time_step", "in_study_repair"),
         bytes_min=_kib(337.32)[0], bytes_max=_kib(337.32)[1]),
     "validation_labels.csv": ExpectedFile(
-        "validation", "outcome", f"{_SEARCH}; {_DESCRIPTOR}",
+        "validation", "outcome", f"{_CATALOG_EVIDENCE}; labels: {_DESCRIPTOR}",
         rows=5_046, column_names=("class_label",),
         bytes_min=_kib(37.83)[0], bytes_max=_kib(37.83)[1]),
     "test_labels.csv": ExpectedFile(
-        "test", "outcome", f"{_SEARCH} (byte count shown as 38,682)",
+        "test", "outcome", f"{_CATALOG_EVIDENCE}; publisher byte-count claim 38,682",
         rows=5_045, column_names=("class_label",), bytes_min=38_682, bytes_max=38_682),
 }
 SPLITS = ("train", "validation", "test")
